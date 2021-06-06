@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  tabla {
+    border: 1px solid white;
+  }
+  </style>
+</head>
+<body>
+<tabla width="400" height="400" id="jatek"></tabla>
+<script>
+var tabla = document.getElementById('jatek');
+var context = tabla.getContext('2d');
+var racs = 16;
+var szamolas = 0;
+
+var kigyo = {
+  x: 160,
+  y: 160,
+
+  // kigyo sebessége, egy rácsot mozog x vagy y irányban
+  dx: racs,
+  dy: 0,
+
+  // azon rácsok nyomonkövetése amit a kigyo használ
+  cells: [],
+
+  // kigyo hossza, ami nő ha almát eszik
+  maxCells: 4
+};
+var alma = {
+  x: 320,
+  y: 320
+};
+
+// véletlenszerű számok kiosztása megh. tartományban
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// jatek loopja
+function loop() {
+  requestAnimationFrame(loop);
+  // a loop lassítása 60 fps-ről 15.re (60/15 = 4)
+  if (++szamolas < 4) {
+    return;
+  }
+  szamolas = 0;
+  context.clearRect(0,0,tabla.width,tabla.height);
+
+  // kigyo mozgatása a sebessége alapján
+  kigyo.x += kigyo.dx;
+  kigyo.y += kigyo.dy;
+  // kigyo vízszintes helyzetének a lezárása a képernyő szélén
+  if (kigyo.x < 0) {
+    kigyo.x = tabla.width - racs;
+  }
+  else if (kigyo.x >= tabla.width) 
+    kigyo.x = 0;
+  }
+
+  // kigyo függőleges helyzetének a lezárása a képernyő szélén
+  if (kigyo.y < 0) {
+    kigyo.y = tabla.height - racs;
+  }
+  else if (kigyo.y >= tabla.height) {
+    kigyo.y = 0;
+  }
+  // a kigyo nyomonkövetése, a sor eleje a feje
+  kigyo.cells.unshift({x: kigyo.x, y: kigyo.y});
+  // azon rácsok törlése amitől eltávolodtunk
+  if (kigyo.cells.length > kigyo.maxCells) {
+    kigyo.cells.pop();
+  }
+  // alma megrajzolása
+  context.fillStyle = 'purple';
+  context.fillRect(alma.x, alma.y, racs-1, racs-1);
+  // kigyo rácsonkénti megrajzolása
+  context.fillStyle = 'red';
+  kigyo.cells.forEach(function(cell, index) {
+
+    // 1 pixellel kisebb legyen a rács a kigyo testén, hogy lássuk milyen hosszú a kigyo
+    context.fillRect(cell.x, cell.y, racs-1, racs-1);  
+    //kigyo megeszi az almát
+    if (cell.x === alma.x && cell.y === alma.y) {
+      kigyo.maxCells++;
+      // a tábla 400x400-es , ami 25x25 rács
+      alma.x = getRandomInt(0, 25) * racs;
+      alma.y = getRandomInt(0, 25) * racs;
+    }
+    
+    for (var i = index + 1; i < kigyo.cells.length; i++) {
+
+      // a kigyo lefoglal valamennyi helyet a testének, játék újraindítása
+      if (cell.x === kigyo.cells[i].x && cell.y === kigyo.cells[i].y) {
+        kigyo.x = 160;
+        kigyo.y = 160;
+        kigyo.cells = [];
+        kigyo.maxCells = 4;
+        kigyo.dx = racs;
+        kigyo.dy = 0;
+        alma.x = getRandomInt(0, 25) * racs;
+        alma.y = getRandomInt(0, 25) * racs;
+      }
+    }
+  });
+}
+
+// a kigyo mozgatásához figyelje a billentyűzeten végrehajtottakat
+document.addEventListener('keydown', function(e) {
+  // ahhoz hogy megakadályozzuk hogy a kigyo visszafele haladjona a saját tstén keresztül, vizsgálni kell  hogy ne haladjon ugyanazon a tengelyen (ha nyomjuk a bal gombot miközben balra megy nem történik semmi, és ha nyomjuk a bal gombot miközben jobbra megy nem fog a saját testébe ütközni)
+
+  // balra nyíl
+  if (e.which === 37 && kigyo.dx === 0) {
+    kigyo.dx = -racs;
+    kigyo.dy = 0;
+  }
+  // fel nyíl
+  else if (e.which === 38 && kigyo.dy === 0) {
+    kigyo.dy = -racs;
+    kigyo.dx = 0;
+  }
+  // jobbra nyíl
+  else if (e.which === 39 && kigyo.dx === 0) {
+    kigyo.dx = racs;
+    kigyo.dy = 0;
+  }
+  // le nyíl
+  else if (e.which === 40 && kigyo.dy === 0) {
+    kigyo.dy = racs;
+    kigyo.dx = 0;
+  }
+});
+// játék elindítása
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
